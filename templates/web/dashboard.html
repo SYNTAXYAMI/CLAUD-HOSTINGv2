@@ -1,0 +1,1723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <title>CLAUD | Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/theme/dracula.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/mode/shell/shell.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/display/placeholder.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+        :root {
+            --bg: #070709;
+            --card: rgba(16,16,20,0.8);
+            --card2: rgba(22,22,28,0.9);
+            --accent: #22d3ee;
+            --accent-glow: rgba(34,211,238,0.28);
+            --green: #32d74b;
+            --red: #ff453a;
+            --orange: #ff9f0a;
+            --purple: #af52de;
+            --border: rgba(255,255,255,0.07);
+            --border2: rgba(255,255,255,0.12);
+            --text-main: #ffffff;
+            --text-dim: #8e8e93;
+            --terminal-bg: #0a0a0c;
+            --glass: blur(16px) saturate(180%);
+        }
+
+        * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; margin:0; padding:0; }
+
+        body {
+            font-family:'Plus Jakarta Sans',sans-serif;
+            background:var(--bg);
+            color:var(--text-main);
+            background-image:
+                radial-gradient(circle at 0% 0%, rgba(34,211,238,0.08) 0%, transparent 45%),
+                radial-gradient(circle at 100% 100%, rgba(175,82,222,0.04) 0%, transparent 45%);
+            min-height:100vh; overflow-x:hidden;
+        }
+
+        /* ── Topbar ── */
+        .topbar {
+            display:flex; justify-content:space-between; align-items:center;
+            padding:12px 20px; background:rgba(7,7,9,0.85);
+            backdrop-filter:var(--glass); position:sticky; top:0; z-index:2000;
+            border-bottom:1px solid var(--border);
+        }
+        .logo-box { display:flex; align-items:center; gap:10px; font-weight:800; font-size:15px; }
+        .logo-icon { background:linear-gradient(135deg,#ff0055,#7000ff); width:32px; height:32px; border-radius:9px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px; }
+        .topbar-right { display:flex; gap:8px; align-items:center; }
+        .notif-badge { background:rgba(255,69,58,0.15); border:1px solid rgba(255,69,58,0.25); border-radius:10px; padding:5px 10px; font-size:11px; font-weight:700; color:var(--red); display:none; cursor:pointer; }
+
+        /* ── Layout ── */
+        .container { padding:16px; max-width:900px; margin:auto; }
+
+        /* ── Buttons ── */
+        .btn { padding:9px 16px; border-radius:11px; border:none; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:7px; font-size:12px; transition:transform 0.15s ease, filter 0.15s ease, background 0.15s ease, box-shadow 0.15s ease; font-family:inherit; color:#fff; }
+        .btn:active { transform:scale(0.95); }
+        .btn-blue { background:var(--accent); color:#fff; box-shadow:0 4px 15px var(--accent-glow); }
+        .btn-blue:hover { filter:brightness(1.15); transform:translateY(-1px); }
+        .btn-gray { background:rgba(255,255,255,0.07); color:#fff; border:1px solid var(--border); }
+        .btn-gray:hover { background:rgba(255,255,255,0.13); transform:translateY(-1px); }
+        .btn-red { background:rgba(255,69,58,0.12); color:var(--red); border:1px solid rgba(255,69,58,0.15); }
+        .btn-green { background:rgba(50,215,75,0.12); color:var(--green); border:1px solid rgba(50,215,75,0.15); }
+        .btn-icon { padding:8px; border-radius:10px; background:rgba(255,255,255,0.07); border:1px solid var(--border); }
+        .btn-icon:hover { background:rgba(255,255,255,0.14); }
+
+        /* ── Server cards ── */
+        .srv-card { background:var(--card); border-radius:18px; padding:14px 16px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; border:1px solid var(--border); transition:0.3s; cursor:pointer; }
+        .srv-card:hover { border-color:var(--accent); background:rgba(34,211,238,0.06); transform:translateY(-1px); }
+        .srv-status { font-size:10px; font-weight:800; text-transform:uppercase; padding:4px 9px; border-radius:7px; }
+        .status-online { background:rgba(50,215,75,0.12); color:var(--green); }
+        .status-offline { background:rgba(142,142,147,0.1); color:#666; }
+        .status-suspended { background:rgba(255,69,58,0.12); color:var(--red); }
+
+        /* ── Section headings ── */
+        .section-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+        .section-title { font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-dim); display:flex; align-items:center; gap:8px; }
+
+        /* ── Control row ── */
+        .ctrl-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:14px; }
+
+        /* ── Resource Monitor ── */
+        .monitor-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:14px; }
+        .res-card { background:var(--card2); border:1px solid var(--border); border-radius:16px; padding:14px; position:relative; overflow:hidden; }
+        .res-card::after { content:''; position:absolute; top:0; right:0; width:50px; height:50px; border-radius:0 16px 0 100%; opacity:0.12; }
+        .res-card.cpu::after { background:var(--accent); }
+        .res-card.ram::after { background:var(--green); }
+        .res-card.disk::after { background:var(--orange); }
+        .res-card.net::after { background:var(--purple); }
+        .res-label { font-size:9px; font-weight:800; text-transform:uppercase; color:var(--text-dim); margin-bottom:6px; display:flex; align-items:center; gap:6px; }
+        .res-val { font-size:22px; font-weight:800; font-family:'JetBrains Mono'; }
+        .res-sub { font-size:10px; color:var(--text-dim); margin-top:3px; }
+        .res-bar { height:3px; background:rgba(255,255,255,0.06); border-radius:3px; margin-top:8px; overflow:hidden; }
+        .res-fill { height:100%; border-radius:3px; transition:width 0.8s ease; }
+        .fill-blue { background:linear-gradient(90deg,#0051d5,#22d3ee); }
+        .fill-green { background:linear-gradient(90deg,#248a3d,#32d74b); }
+        .fill-orange { background:linear-gradient(90deg,#b36200,#ff9f0a); }
+        .fill-purple { background:linear-gradient(90deg,#6e23b0,#af52de); }
+        .res-chart-mini { margin-top:8px; height:36px; }
+
+        .info-row { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:14px; }
+        .info-pill { background:var(--card2); border:1px solid var(--border); border-radius:12px; padding:10px 12px; text-align:center; }
+        .info-pill .lbl { font-size:9px; font-weight:800; text-transform:uppercase; color:var(--text-dim); }
+        .info-pill .val { font-size:14px; font-weight:800; font-family:'JetBrains Mono'; margin-top:4px; }
+
+        /* ── Console Engine (virtual-scroll AI terminal) ── */
+        .console-wrap { background:var(--terminal-bg); border-radius:14px; border:1px solid rgba(255,255,255,0.06); overflow:hidden; margin-bottom:14px; contain:layout; }
+        .console-header { background:#111114; padding:8px 10px; border-bottom:1px solid rgba(255,255,255,0.06); display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; }
+        .console-header-left { display:flex; align-items:center; gap:8px; font-family:'JetBrains Mono'; font-size:10px; color:#666; min-width:0; }
+        .console-controls { display:flex; gap:3px; flex-wrap:wrap; align-items:center; }
+        .con-btn { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.08); border-radius:7px; padding:5px 8px; color:#aaa; font-size:10px; font-weight:700; cursor:pointer; font-family:inherit; transition:0.15s; white-space:nowrap; display:inline-flex; align-items:center; gap:3px; }
+        .con-btn:hover { background:rgba(255,255,255,0.12); color:#fff; }
+        .con-btn.active { background:rgba(255,159,10,0.15); border-color:rgba(255,159,10,0.3); color:var(--orange); }
+        .con-btn.active-green { background:rgba(50,215,75,0.12); border-color:rgba(50,215,75,0.2); color:var(--green); }
+        .con-btn.active-red { background:rgba(255,69,58,0.12); border-color:rgba(255,69,58,0.2); color:var(--red); }
+        /* Filter + perf row */
+        .console-filter-row { background:#0c0c0f; border-bottom:1px solid rgba(255,255,255,0.04); padding:5px 10px; display:flex; gap:4px; align-items:center; flex-wrap:wrap; }
+        .filter-btn { padding:3px 7px; border-radius:6px; font-size:10px; font-weight:800; cursor:pointer; border:1px solid transparent; font-family:inherit; transition:0.15s; }
+        .filter-btn-all  { background:rgba(255,255,255,0.06); color:#777; border-color:rgba(255,255,255,0.09); }
+        .filter-btn-all.f-active  { background:rgba(255,255,255,0.14); color:#fff; }
+        .filter-btn-err  { background:rgba(255,69,58,0.08);  color:#ff6060; border-color:rgba(255,69,58,0.12); }
+        .filter-btn-err.f-active  { background:rgba(255,69,58,0.18); }
+        .filter-btn-warn { background:rgba(255,159,10,0.08); color:var(--orange); border-color:rgba(255,159,10,0.12); }
+        .filter-btn-warn.f-active { background:rgba(255,159,10,0.18); }
+        .filter-btn-info { background:rgba(34,211,238,0.10);  color:var(--accent); border-color:rgba(34,211,238,0.15); }
+        .filter-btn-info.f-active { background:rgba(34,211,238,0.18); }
+        .console-perf { margin-left:auto; display:flex; gap:8px; font-family:'JetBrains Mono'; font-size:9px; }
+        .perf-item { color:#2e2e38; } .perf-item .pv { color:#45454e; }
+        /* Search bar */
+        .console-search { background:#0e0e12; border-bottom:1px solid rgba(255,255,255,0.05); padding:6px 10px; display:none; align-items:center; gap:7px; }
+        .console-search input { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:5px 9px; color:#fff; font-size:12px; font-family:'JetBrains Mono'; outline:none; flex:1; min-width:0; }
+        /* Virtual scroll viewport — GPU-composited for smooth Chrome scrolling */
+        .console-viewport { height:300px; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; scroll-behavior:auto; position:relative; }
+        .console-viewport.vs-fullscreen { height:calc(100vh - 160px); }
+        .console-inner { font-family:'JetBrains Mono',monospace; font-size:11.5px; line-height:1.65; color:#ccc; padding:6px 12px; min-height:100%; contain:layout style; }
+        .log-spacer { pointer-events:none; display:block; contain:strict; }
+        .log-line { display:flex; gap:6px; align-items:flex-start; height:20px; overflow:hidden; padding:0 0 1px; contain:strict; cursor:default; }
+        .log-line:hover { background:rgba(255,255,255,0.025); border-radius:3px; }
+        /* Slim custom scrollbars (Chrome/WebKit) for a smoother, more native feel */
+        .console-viewport::-webkit-scrollbar, .fm-list::-webkit-scrollbar, .ctx-menu::-webkit-scrollbar { width:9px; height:9px; }
+        .console-viewport::-webkit-scrollbar-track, .fm-list::-webkit-scrollbar-track { background:transparent; }
+        .console-viewport::-webkit-scrollbar-thumb, .fm-list::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.14); border-radius:8px; border:2px solid transparent; background-clip:padding-box; }
+        .console-viewport::-webkit-scrollbar-thumb:hover, .fm-list::-webkit-scrollbar-thumb:hover { background:rgba(34,211,238,0.45); background-clip:padding-box; }
+        * { scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.14) transparent; }
+        .log-ts { color:#2d2d38; font-size:9px; flex-shrink:0; padding-top:2px; user-select:none; width:58px; }
+        .log-text { flex:1; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+        .log-info  { color:#64d2ff; }
+        .log-warn  { color:var(--orange); }
+        .log-error { color:#ff6b6b; }
+        .log-debug { color:#bf5af2; }
+        .log-cmd   { color:var(--green); }
+        .log-plain { color:#b0b0be; }
+        .log-traceback { color:#ff8080; border-left:2px solid rgba(255,69,58,0.35); padding-left:6px; margin-left:-2px; background:rgba(255,45,58,0.04); }
+        .log-install { color:#ffd60a; }
+        .log-ok { color:var(--green); }
+        .log-copy-btn { opacity:0; font-size:9px; color:#555; cursor:pointer; padding:0 3px; flex-shrink:0; transition:0.1s; user-select:none; }
+        .log-line:hover .log-copy-btn { opacity:1; }
+        /* Terminal input */
+        .terminal-input-area { background:#0a0a0d; padding:7px 12px; border-top:1px solid rgba(255,255,255,0.05); display:flex; align-items:center; gap:8px; }
+        .term-prompt { color:var(--accent); font-weight:800; font-family:'JetBrains Mono'; font-size:12px; flex-shrink:0; }
+        .terminal-input-area input { background:transparent; border:none; color:var(--green); flex:1; font-family:'JetBrains Mono'; font-size:12px; outline:none; min-width:0; }
+        /* Mode badge */
+        .mode-badge { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:7px; font-size:9px; font-weight:800; cursor:pointer; user-select:none; transition:0.15s; background:rgba(34,211,238,0.12); color:var(--accent); border:1px solid rgba(34,211,238,0.22); }
+        .mode-badge.turbo  { background:rgba(255,159,10,0.1); color:var(--orange); border-color:rgba(255,159,10,0.2); }
+        .mode-badge.lowmem { background:rgba(50,215,75,0.1);  color:var(--green);  border-color:rgba(50,215,75,0.2); }
+        /* AI panel */
+        .ai-panel { border-radius:14px; margin-bottom:12px; overflow:hidden; display:none; border:1px solid rgba(255,45,85,0.2); background:linear-gradient(135deg,rgba(20,12,20,0.97),rgba(14,10,22,0.97)); }
+        .ai-panel.ai-visible { display:block; animation:aiSlide 0.25s ease; }
+        @keyframes aiSlide { from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);} }
+        .ai-hdr { padding:9px 12px; display:flex; justify-content:space-between; align-items:center; background:rgba(255,45,85,0.06); border-bottom:1px solid rgba(255,45,85,0.12); }
+        .ai-badge { background:linear-gradient(135deg,#ff2d55,#af52de); border-radius:6px; padding:2px 7px; font-size:9px; font-weight:900; letter-spacing:0.5px; color:#fff; }
+        .ai-hdr-title { font-size:12px; font-weight:800; display:flex; align-items:center; gap:7px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .ai-hdr-actions { display:flex; gap:4px; align-items:center; flex-shrink:0; }
+        .ai-body-wrap { padding:12px 14px; }
+        .ai-etype { font-size:9px; font-weight:900; text-transform:uppercase; letter-spacing:0.7px; margin-bottom:5px; }
+        .ai-etype.crit { color:var(--red); } .ai-etype.warn-lv { color:var(--orange); }
+        .ai-expl { font-size:12px; color:#ccc; line-height:1.6; margin-bottom:8px; }
+        .ai-cause { font-size:11px; color:#777; margin-bottom:10px; }
+        .ai-fix-box { background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.07); border-radius:10px; padding:9px 12px; margin-bottom:10px; }
+        .ai-fix-lbl { font-size:9px; font-weight:900; text-transform:uppercase; color:#555; margin-bottom:5px; }
+        .ai-fix-cmd { font-family:'JetBrains Mono'; font-size:12px; color:var(--green); display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; }
+        .ai-meta-row { display:flex; gap:16px; margin-bottom:10px; }
+        .ai-meta-item .amv { font-size:20px; font-weight:800; font-family:'JetBrains Mono'; }
+        .ai-meta-item .aml { font-size:9px; color:var(--text-dim); font-weight:700; text-transform:uppercase; }
+        .ai-pa-tip { background:rgba(34,211,238,0.07); border:1px solid rgba(34,211,238,0.18); border-radius:8px; padding:7px 10px; font-size:11px; color:#777; margin-bottom:8px; }
+        .ai-matched { font-size:10px; color:#2e2e38; font-family:'JetBrains Mono'; border-top:1px solid rgba(255,255,255,0.04); padding-top:7px; margin-top:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+        /* ── File Manager ── */
+        .fm-wrap { background:var(--card); border-radius:16px; border:1px solid var(--border); overflow:hidden; }
+        .fm-header { padding:12px 16px; background:rgba(255,255,255,0.02); border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; gap:10px; }
+        .fm-title { font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-dim); }
+        .fm-actions { display:flex; gap:5px; flex-wrap:wrap; }
+        .fm-search { padding:6px 12px 6px 12px; background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:9px; color:#fff; font-size:12px; font-family:inherit; outline:none; width:100%; }
+        .fm-search::placeholder { color:#555; }
+        .breadcrumb { padding:10px 16px; display:flex; align-items:center; gap:5px; flex-wrap:wrap; border-bottom:1px solid var(--border); background:rgba(0,0,0,0.15); min-height:40px; }
+        .crumb { font-size:11px; color:var(--text-dim); cursor:pointer; display:flex; align-items:center; gap:4px; transition:0.2s; }
+        .crumb:hover { color:#fff; }
+        .crumb.active { color:#fff; font-weight:700; }
+        .crumb-sep { color:#444; font-size:10px; }
+        .fm-toolbar { padding:8px 16px; border-bottom:1px solid var(--border); display:flex; gap:5px; flex-wrap:wrap; align-items:center; background:rgba(255,255,255,0.01); }
+        .fm-tool-btn { background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:5px 10px; color:#ccc; font-size:11px; font-weight:700; cursor:pointer; font-family:inherit; display:flex; align-items:center; gap:5px; transition:0.2s; white-space:nowrap; }
+        .fm-tool-btn:hover { background:rgba(255,255,255,0.1); color:#fff; }
+        .fm-tool-btn.active { background:rgba(34,211,238,0.18); border-color:rgba(34,211,238,0.28); color:var(--accent); }
+        .fm-drop-zone { position:relative; }
+        .fm-drop-zone.drag-over::before { content:'Drop to upload'; position:absolute; inset:0; background:rgba(34,211,238,0.18); border:2px dashed var(--accent); z-index:100; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:800; color:var(--accent); border-radius:0 0 16px 16px; }
+        .file-list-body { max-height:380px; overflow-y:auto; }
+        .file-item { display:flex; align-items:center; padding:10px 16px; border-bottom:1px solid rgba(255,255,255,0.03); cursor:pointer; transition:background 0.15s ease; gap:10px; position:relative; user-select:none; }
+        .file-item:last-child { border-bottom:none; }
+        .file-item:hover { background:rgba(255,255,255,0.045); }
+        .file-more { opacity:0.75; }
+        .file-item:hover .file-more { opacity:1; }
+        .file-item.selected { background:rgba(34,211,238,0.10); border-color:rgba(34,211,238,0.12); }
+        .file-check { width:16px; height:16px; border-radius:5px; border:2px solid rgba(255,255,255,0.15); display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:0.2s; }
+        .file-item.selected .file-check { background:var(--accent); border-color:var(--accent); }
+        .file-item.selected .file-check::after { content:'✓'; font-size:9px; color:#fff; font-weight:900; }
+        .file-icon { font-size:18px; flex-shrink:0; width:26px; text-align:center; }
+        .file-icon.dir { color:#ffd60a; }
+        .file-icon.py { color:#4aade8; }
+        .file-icon.js { color:#f0db4f; }
+        .file-icon.txt,.file-icon.md { color:#ccc; }
+        .file-icon.zip,.file-icon.gz,.file-icon.tar { color:var(--orange); }
+        .file-icon.sh { color:var(--green); }
+        .file-icon.img { color:var(--purple); }
+        .file-icon.json,.file-icon.yaml,.file-icon.yml { color:#ff9f0a; }
+        .file-icon.html,.file-icon.css { color:#e34c26; }
+        .file-icon.req { color:var(--red); }
+        .file-icon.generic { color:#8e8e93; }
+        .file-meta { display:flex; flex-direction:column; flex:1; min-width:0; }
+        .file-name { font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .file-info { font-size:10px; color:var(--text-dim); margin-top:2px; display:flex; gap:10px; }
+        .file-perms { font-family:'JetBrains Mono'; font-size:10px; color:#555; }
+        .file-more { padding:5px 8px; color:var(--text-dim); cursor:pointer; border-radius:7px; transition:0.2s; }
+        .file-more:hover { background:rgba(255,255,255,0.1); color:#fff; }
+        .fm-empty { text-align:center; padding:40px 20px; color:var(--text-dim); }
+        .fm-loading { text-align:center; padding:30px; }
+        .spinner { display:inline-block; width:24px; height:24px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.7s linear infinite; }
+        @keyframes spin { to { transform:rotate(360deg); } }
+        .progress-bar-wrap { background:var(--border); border-radius:3px; overflow:hidden; height:3px; margin:0 16px 12px; display:none; }
+        .progress-bar-fill { height:100%; background:var(--accent); border-radius:3px; transition:width 0.3s; }
+        .skeleton-line { background:linear-gradient(90deg,rgba(255,255,255,0.04) 25%,rgba(255,255,255,0.08) 50%,rgba(255,255,255,0.04) 75%); background-size:200% 100%; animation:shimmer 1.5s infinite; border-radius:6px; height:14px; margin:10px 16px; }
+        @keyframes shimmer { 0%{background-position:200% 0;} 100%{background-position:-200% 0;} }
+
+        /* ── Context Menu ── */
+        .ctx-menu { position:fixed; background:rgba(22,22,28,0.97); border:1px solid var(--border2); border-radius:14px; padding:6px; min-width:190px; z-index:9999; backdrop-filter:blur(20px); box-shadow:0 15px 40px rgba(0,0,0,0.7); display:none; }
+        .ctx-item { padding:9px 14px; border-radius:8px; display:flex; align-items:center; gap:10px; cursor:pointer; font-size:13px; transition:0.15s; }
+        .ctx-item:hover { background:rgba(255,255,255,0.07); }
+        .ctx-item.danger { color:var(--red); }
+        .ctx-item.danger:hover { background:rgba(255,69,58,0.1); }
+        .ctx-separator { height:1px; background:var(--border); margin:4px 0; }
+        .ctx-icon { width:18px; text-align:center; flex-shrink:0; }
+
+        /* ── Editor ── */
+        #editor-overlay { display:none; position:fixed; inset:0; background:var(--bg); z-index:8000; flex-direction:column; padding:0; }
+        #editor-overlay.active { display:flex; }
+        .editor-topbar { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:rgba(10,10,12,0.9); border-bottom:1px solid var(--border); backdrop-filter:var(--glass); gap:10px; }
+        .editor-filename { font-family:'JetBrains Mono'; font-size:13px; color:#ccc; }
+        .CodeMirror { flex:1; border-radius:0; font-size:13px; height:100% !important; }
+        .cm-wrap { flex:1; overflow:hidden; display:flex; flex-direction:column; }
+
+        /* ── Overlays / Modals ── */
+        .overlay { position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:5000; display:none; align-items:center; justify-content:center; backdrop-filter:blur(8px); }
+        .overlay.active { display:flex; }
+        .modal-box { background:#141418; border:1px solid var(--border2); border-radius:22px; width:90%; max-width:360px; overflow:hidden; box-shadow:0 30px 60px rgba(0,0,0,0.7); }
+        .modal-header { padding:16px 20px 12px; border-bottom:1px solid var(--border); }
+        .modal-title { font-size:16px; font-weight:800; }
+        .modal-body { padding:16px 20px; }
+        .modal-footer { padding:12px 20px 16px; display:flex; gap:8px; justify-content:flex-end; }
+
+        /* ── Toast ── */
+        .toast-container { position:fixed; bottom:24px; right:16px; z-index:10000; display:flex; flex-direction:column; gap:8px; pointer-events:none; }
+        .toast { background:rgba(22,22,28,0.98); border:1px solid var(--border2); border-radius:14px; padding:12px 16px; display:flex; align-items:center; gap:10px; font-size:13px; min-width:200px; box-shadow:0 10px 30px rgba(0,0,0,0.5); pointer-events:all; animation:toastIn 0.3s ease; backdrop-filter:blur(20px); }
+        .toast.out { animation:toastOut 0.3s ease forwards; }
+        @keyframes toastIn { from{transform:translateX(120%);opacity:0;} to{transform:translateX(0);opacity:1;} }
+        @keyframes toastOut { from{transform:translateX(0);opacity:1;} to{transform:translateX(120%);opacity:0;} }
+
+        /* ── Search Results ── */
+        .search-results { position:absolute; top:100%; left:0; right:0; background:#141418; border:1px solid var(--border2); border-radius:0 0 14px 14px; max-height:220px; overflow-y:auto; z-index:100; display:none; }
+        .search-result-item { padding:10px 16px; display:flex; align-items:center; gap:10px; cursor:pointer; border-bottom:1px solid rgba(255,255,255,0.04); font-size:12px; transition:0.15s; }
+        .search-result-item:hover { background:rgba(255,255,255,0.05); }
+
+        /* ── Responsive ── */
+        @media(max-width:600px) {
+            .info-row { grid-template-columns:repeat(2,1fr); }
+            .monitor-grid { grid-template-columns:1fr; }
+            .ctrl-row { grid-template-columns:1fr 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Context menu -->
+<div class="ctx-menu" id="ctxMenu">
+    <div class="ctx-item" id="ctx-open"><span class="ctx-icon"><i class="fas fa-folder-open"></i></span> Open</div>
+    <div class="ctx-item" id="ctx-edit"><span class="ctx-icon"><i class="fas fa-pen"></i></span> Edit</div>
+    <div class="ctx-item" id="ctx-rename"><span class="ctx-icon"><i class="fas fa-pen-to-square"></i></span> Rename</div>
+    <div class="ctx-item" id="ctx-duplicate"><span class="ctx-icon"><i class="fas fa-copy"></i></span> Duplicate</div>
+    <div class="ctx-separator"></div>
+    <div class="ctx-item" id="ctx-copy"><span class="ctx-icon"><i class="fas fa-clipboard"></i></span> Copy</div>
+    <div class="ctx-item" id="ctx-cut"><span class="ctx-icon"><i class="fas fa-scissors"></i></span> Cut</div>
+    <div class="ctx-item" id="ctx-paste"><span class="ctx-icon"><i class="fas fa-paste"></i></span> Paste</div>
+    <div class="ctx-separator"></div>
+    <div class="ctx-item" id="ctx-download"><span class="ctx-icon"><i class="fas fa-download"></i></span> Download</div>
+    <div class="ctx-item" id="ctx-zip"><span class="ctx-icon"><i class="fas fa-file-zipper"></i></span> Compress to ZIP</div>
+    <div class="ctx-item" id="ctx-unzip"><span class="ctx-icon"><i class="fas fa-box-open"></i></span> Extract ZIP</div>
+    <div class="ctx-separator"></div>
+    <div class="ctx-item danger" id="ctx-delete"><span class="ctx-icon"><i class="fas fa-trash"></i></span> Delete</div>
+</div>
+
+<!-- Topbar -->
+<div class="topbar">
+    <div class="logo-box">
+        <div class="logo-icon"><i class="fas fa-bolt"></i></div>
+        <span>{{ user.fname }}</span>
+    </div>
+    <div class="topbar-right">
+        {% if notification %}
+        <div class="notif-badge" id="notifBadge" onclick="showNotif()" style="display:flex;"><i class="fas fa-bell"></i> Alert</div>
+        {% endif %}
+        <button class="btn btn-gray btn-icon" onclick="location.href='/logout'" title="Logout"><i class="fas fa-sign-out-alt"></i></button>
+    </div>
+</div>
+
+<!-- HOME VIEW -->
+<div class="container" id="homeView">
+    <div class="section-head" style="margin-top:4px;">
+        <span class="section-title"><i class="fas fa-server"></i> My Instances</span>
+        <button class="btn btn-blue" onclick="createServer()"><i class="fas fa-plus"></i> Create</button>
+    </div>
+    <div id="srvList">
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line" style="width:80%;"></div>
+        <div class="skeleton-line" style="width:60%;"></div>
+    </div>
+</div>
+
+<!-- MANAGE VIEW -->
+<div class="container" id="manageView" style="display:none;">
+    <!-- Back + name row -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+            <button class="btn btn-gray btn-icon" onclick="goHome()"><i class="fas fa-arrow-left"></i></button>
+            <span id="vSrvName" style="font-weight:800;font-size:16px;">-</span>
+        </div>
+        <div id="vStatus" class="srv-status status-offline">OFFLINE</div>
+    </div>
+
+    <!-- Server controls -->
+    <div class="ctrl-row" style="margin-bottom:14px;">
+        <button class="btn btn-green" style="justify-content:center;" onclick="srvAction('start')"><i class="fas fa-play"></i> START</button>
+        <button class="btn btn-gray" style="justify-content:center;" onclick="srvAction('restart')"><i class="fas fa-rotate-right"></i> RESTART</button>
+        <button class="btn btn-red" style="justify-content:center;" onclick="srvAction('stop')"><i class="fas fa-stop"></i> STOP</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+        <button class="btn btn-gray" style="flex:1;justify-content:center;" onclick="srvAction('install')"><i class="fas fa-box-archive"></i> Install Pkgs</button>
+        <button class="btn btn-gray" style="flex:1;justify-content:center;" onclick="setStartupFile()"><i class="fas fa-file-code"></i> Set Startup</button>
+        <button class="btn btn-red" style="justify-content:center;" onclick="deleteServer()"><i class="fas fa-trash"></i></button>
+    </div>
+
+    <!-- Console (moved to top — no scrolling needed to reach it) -->
+    <div class="section-head">
+        <span class="section-title"><i class="fas fa-terminal"></i> Console</span>
+        <span class="mode-badge" id="modeBadge" onclick="cycleMode()" title="Click to cycle: Normal → Turbo → Low Memory">⚡ NORMAL</span>
+    </div>
+
+    <div class="console-wrap" id="consoleWrap">
+        <!-- Header row -->
+        <div class="console-header">
+            <div class="console-header-left">
+                <i class="fas fa-terminal" style="color:var(--accent);font-size:10px;"></i>
+                <span id="consoleServerName" style="color:var(--accent);">-</span>
+                <span id="consoleLogSize" style="color:#333;">0 lines</span>
+            </div>
+            <div class="console-controls">
+                <button class="con-btn" onclick="toggleSearch()" title="Search logs (Ctrl+F)"><i class="fas fa-search"></i></button>
+                <button class="con-btn active-green" id="btnAutoScroll" onclick="toggleAutoScroll()" title="Auto-scroll">↓ Auto</button>
+                <button class="con-btn" id="btnPause" onclick="togglePause()" title="Pause / Resume output"><i class="fas fa-pause"></i></button>
+                <button class="con-btn" onclick="jumpError(-1)" title="Previous error"><i class="fas fa-arrow-up" style="color:var(--red);font-size:8px;"></i>E</button>
+                <button class="con-btn" onclick="jumpError(1)"  title="Next error">E<i class="fas fa-arrow-down" style="color:var(--red);font-size:8px;"></i></button>
+                <button class="con-btn" onclick="copyLogs()"    title="Copy visible logs"><i class="fas fa-copy"></i></button>
+                <button class="con-btn" onclick="downloadLogs()" title="Download full log"><i class="fas fa-download"></i></button>
+                <button class="con-btn" onclick="clearConsole()" title="Clear console"><i class="fas fa-trash"></i></button>
+                <button class="con-btn" onclick="toggleFullscreen()" title="Fullscreen"><i class="fas fa-expand"></i></button>
+            </div>
+        </div>
+
+        <!-- Filter + live performance metrics -->
+        <div class="console-filter-row">
+            <button class="filter-btn filter-btn-all  f-active" id="fbAll"  onclick="setFilter('all')">All <span id="cntAll">0</span></button>
+            <button class="filter-btn filter-btn-err"           id="fbErr"  onclick="setFilter('error')">Errors <span id="cntErr">0</span></button>
+            <button class="filter-btn filter-btn-warn"          id="fbWarn" onclick="setFilter('warn')">Warns <span id="cntWarn">0</span></button>
+            <button class="filter-btn filter-btn-info"          id="fbInfo" onclick="setFilter('info')">Info <span id="cntInfo">0</span></button>
+            <div class="console-perf">
+                <span class="perf-item">FPS <span class="pv" id="pFPS">-</span></span>
+                <span class="perf-item">Rate <span class="pv" id="pRate">0</span>/s</span>
+                <span class="perf-item">Mem <span class="pv" id="pMem">-</span></span>
+            </div>
+        </div>
+
+        <!-- Inline search bar (hidden by default) -->
+        <div class="console-search" id="consoleSearch">
+            <input type="text" id="searchInput" placeholder="Search logs… (Ctrl+F)"
+                   oninput="onSearch(this.value)" autocomplete="off" autocorrect="off" spellcheck="false">
+            <span id="searchInfo" style="font-size:10px;color:var(--text-dim);white-space:nowrap;font-family:'JetBrains Mono';"></span>
+            <button class="con-btn" onclick="searchStep(-1)">↑</button>
+            <button class="con-btn" onclick="searchStep(1)">↓</button>
+            <button class="con-btn" onclick="toggleSearch()">✕</button>
+        </div>
+
+        <!-- Virtual-scroll log viewport -->
+        <div class="console-viewport" id="consoleVP">
+            <div class="console-inner" id="consoleInner">
+                <div class="log-spacer" id="vsTop" style="height:0px"></div>
+                <div id="vsLines"></div>
+                <div class="log-spacer" id="vsBot" style="height:0px"></div>
+            </div>
+        </div>
+
+        <!-- Terminal command input -->
+        <div class="terminal-input-area">
+            <span class="term-prompt">$</span>
+            <input type="text" id="termCmd" placeholder="Type command and press Enter…"
+                   autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        </div>
+    </div>
+
+    <!-- File Manager (moved to top — no scrolling needed to reach it) -->
+    <div class="section-head"><span class="section-title"><i class="fas fa-folder-open"></i> File Manager</span></div>
+
+    <div class="fm-wrap">
+        <div class="fm-header">
+            <span class="fm-title"><i class="fas fa-hdd"></i> Files</span>
+            <div class="fm-actions">
+                <button class="btn btn-gray" style="padding:6px 11px;font-size:11px;" onclick="triggerUpload()" title="Upload File"><i class="fas fa-upload"></i> Upload File</button>
+                <button class="btn btn-gray" style="padding:6px 11px;font-size:11px;" onclick="triggerZipUpload()" title="Upload Zip Archive"><i class="fas fa-file-zipper"></i> Upload Zip</button>
+                <button class="btn btn-gray" style="padding:6px 11px;font-size:11px;" onclick="triggerFolderUpload()" title="Upload Folder"><i class="fas fa-folder-open"></i> Upload Folder</button>
+                <input type="file" id="fUp" hidden multiple onchange="uploadFiles(this.files)">
+                <input type="file" id="fUpZip" hidden accept=".zip,.rar,.7z,.tar,.gz,.tgz" onchange="uploadZip(this.files)">
+                <input type="file" id="fUpFolder" hidden webkitdirectory multiple onchange="uploadFiles(this.files, true)">
+            </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="fm-toolbar">
+            <button class="fm-tool-btn" onclick="createNew('file')"><i class="fas fa-file-plus"></i> New File</button>
+            <button class="fm-tool-btn" onclick="createNew('folder')"><i class="fas fa-folder-plus"></i> New Folder</button>
+            <button class="fm-tool-btn" onclick="pasteFiles()" id="btnPaste" style="display:none;"><i class="fas fa-paste"></i> Paste</button>
+            <div style="flex:1;"></div>
+            <div style="position:relative;">
+                <input type="text" class="fm-search" placeholder="🔍 Search files..." id="fmSearchInput" oninput="searchFiles(this.value)" style="width:180px;">
+                <div class="search-results" id="searchResults"></div>
+            </div>
+            <span style="font-size:11px;color:var(--text-dim);margin-left:5px;" id="selectionCount"></span>
+        </div>
+
+        <!-- Breadcrumb -->
+        <div class="breadcrumb" id="breadcrumb">
+            <span class="crumb active" onclick="navigateTo('')"><i class="fas fa-house"></i> Root</span>
+        </div>
+
+        <!-- Progress bar -->
+        <div class="progress-bar-wrap" id="progressWrap">
+            <div class="progress-bar-fill" id="progressBar" style="width:0%"></div>
+        </div>
+
+        <!-- Drop zone + file list -->
+        <div class="fm-drop-zone" id="dropZone">
+            <div class="file-list-body" id="fileList">
+                <div class="fm-loading"><div class="spinner"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resource Monitor -->
+    <div class="section-head"><span class="section-title"><i class="fas fa-chart-line"></i> Resource Monitor</span><span id="monitorUpdated" style="font-size:10px;color:var(--text-dim);font-family:'JetBrains Mono';"></span></div>
+
+    <div class="info-row">
+        <div class="info-pill"><div class="lbl"><i class="fas fa-circle-dot" style="color:var(--green)"></i> Status</div><div class="val" id="rStatus" style="font-size:12px;">OFFLINE</div></div>
+        <div class="info-pill"><div class="lbl"><i class="fas fa-hashtag" style="color:var(--accent)"></i> PID</div><div class="val" id="rPid">-</div></div>
+        <div class="info-pill"><div class="lbl"><i class="fas fa-clock" style="color:var(--orange)"></i> Uptime</div><div class="val" id="rUptime" style="font-size:11px;">-</div></div>
+        <div class="info-pill"><div class="lbl"><i class="fas fa-code-branch" style="color:var(--purple)"></i> Threads</div><div class="val" id="rThreads">-</div></div>
+    </div>
+
+    <div class="monitor-grid">
+        <div class="res-card cpu">
+            <div class="res-label"><i class="fas fa-microchip" style="color:var(--accent)"></i> CPU Usage</div>
+            <div class="res-val" id="rCpu">0%</div>
+            <div class="res-sub">System: <span id="rSysCpu">0%</span></div>
+            <div class="res-bar"><div class="res-fill fill-blue" id="rCpuBar" style="width:0%"></div></div>
+            <canvas class="res-chart-mini" id="cpuChart"></canvas>
+        </div>
+        <div class="res-card ram">
+            <div class="res-label"><i class="fas fa-memory" style="color:var(--green)"></i> RAM</div>
+            <div class="res-val" id="rRam">0 MB</div>
+            <div class="res-sub"><span id="rSysRam">0</span> / <span id="rSysRamT">0</span> GB</div>
+            <div class="res-bar"><div class="res-fill fill-green" id="rRamBar" style="width:0%"></div></div>
+            <canvas class="res-chart-mini" id="ramChart"></canvas>
+        </div>
+        <div class="res-card disk">
+            <div class="res-label"><i class="fas fa-hard-drive" style="color:var(--orange)"></i> Disk</div>
+            <div class="res-val" id="rDisk">0%</div>
+            <div class="res-sub"><span id="rDiskUsed">0</span> / <span id="rDiskTotal">0</span> GB</div>
+            <div class="res-bar"><div class="res-fill fill-orange" id="rDiskBar" style="width:0%"></div></div>
+        </div>
+        <div class="res-card net">
+            <div class="res-label"><i class="fas fa-network-wired" style="color:var(--purple)"></i> Network</div>
+            <div class="res-val" style="font-size:14px;"><span id="rNetUp">↑ 0</span> MB</div>
+            <div class="res-sub">↓ Recv: <span id="rNetDown">0</span> MB</div>
+            <div class="res-bar"><div class="res-fill fill-purple" style="width:60%"></div></div>
+        </div>
+    </div>
+
+    <!-- AI Error Panel (shown automatically when errors are detected) -->
+    <div class="ai-panel" id="aiPanel">
+        <div class="ai-hdr">
+            <div class="ai-hdr-title">
+                <span class="ai-badge">AI</span>
+                <span id="aiTitle">Error Detected</span>
+            </div>
+            <div class="ai-hdr-actions">
+                <span id="aiCount" style="font-size:10px;color:var(--red);font-weight:800;margin-right:2px;"></span>
+                <button class="con-btn" onclick="aiNav(-1)" title="Previous issue">↑</button>
+                <button class="con-btn" onclick="aiNav(1)"  title="Next issue">↓</button>
+                <button class="con-btn" onclick="closeAi()">✕</button>
+            </div>
+        </div>
+        <div class="ai-body-wrap" id="aiBody"></div>
+    </div>
+
+    </div>
+</div>
+
+<!-- Editor overlay -->
+<div id="editor-overlay">
+    <div class="editor-topbar">
+        <span class="editor-filename" id="edFile"></span>
+        <div style="display:flex;gap:8px;">
+            <button class="btn btn-gray" onclick="closeEditor()"><i class="fas fa-times"></i> Close</button>
+            <button class="btn btn-blue" onclick="saveFile()"><i class="fas fa-save"></i> Save</button>
+        </div>
+    </div>
+    <div class="cm-wrap">
+        <textarea id="edText"></textarea>
+    </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// State
+// ═══════════════════════════════════════════════════════════
+// ── Shared state ──────────────────────────────────────────
+let curSrv = null, logItv = null, statsItv = null;
+let currentSubPath = '', editorInstance = null;
+let selectedFiles = new Set(), clipboard = null;
+let cmdHistory = [], cmdHistIdx = -1;
+let cpuData = Array(20).fill(0), ramData = Array(20).fill(0);
+let cpuChart, ramChart;
+const FOLDER = '{{ admin_folder if is_admin_view is defined and is_admin_view else "" }}';
+
+// ── Console engine state ──────────────────────────────────
+const PERF_MODES = {
+    normal: { label:'⚡ NORMAL', cls:'',       maxLines:5000,  batchMs:150, renderBuf:80,  pollMs:1200 },
+    turbo:  { label:'🚀 TURBO',  cls:'turbo',  maxLines:10000, batchMs:50,  renderBuf:120, pollMs:600  },
+    lowmem: { label:'🌿 LOW MEM',cls:'lowmem', maxLines:1000,  batchMs:350, renderBuf:40,  pollMs:2500 }
+};
+let modeKey = 'normal', mode = PERF_MODES.normal;
+// Auto-downgrade to LOW MEM on budget Android (Infinix Hot 50i, entry-level Chrome).
+(function autoPerf(){
+  try {
+    const dm = navigator.deviceMemory || 8;
+    const hc = navigator.hardwareConcurrency || 8;
+    const sd = navigator.connection && (navigator.connection.saveData ||
+               ['slow-2g','2g','3g'].includes(navigator.connection.effectiveType));
+    if (dm <= 3 || hc <= 4 || sd) { modeKey = 'lowmem'; mode = PERF_MODES.lowmem; }
+  } catch(_) {}
+})();
+let allLines = [], filteredLines = [];
+let logsPaused = false, autoScroll = true;
+let logOffset = 0;
+let activeFilter = 'all', searchQuery = '';
+let lineCounts = {all:0, error:0, warn:0, info:0};
+let errIndices = [], errNavIdx = 0, searchStepIdx = 0;
+let isScrolling = false, scrollTimer = null, batchTimer = null;
+let vsStart = -1, vsEnd = -1;
+let perfRafId = null, fpsFrames = 0, fpsLast = 0;
+let logRateTick = 0, logRateTimer = null;
+let aiDetected = [], aiIdx = 0;
+
+// ═══════════════════════════════════════════════════════════
+// Toast
+// ═══════════════════════════════════════════════════════════
+function toast(msg, type='success') {
+    const icons = {success:'✅', error:'❌', warning:'⚠️', info:'ℹ️'};
+    const colors = {success:'var(--green)', error:'var(--red)', warning:'var(--orange)', info:'var(--accent)'};
+    const c = document.getElementById('toastContainer');
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.innerHTML = `<span style="color:${colors[type]};font-size:16px;">${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
+    c.appendChild(t);
+    setTimeout(() => { t.classList.add('out'); setTimeout(()=>t.remove(), 400); }, 3000);
+}
+
+// ═══════════════════════════════════════════════════════════
+// Notification
+// ═══════════════════════════════════════════════════════════
+function showNotif() {
+    Swal.fire({title:'Alert from Admin',text:'{{ notification }}',icon:'warning',background:'#1c1c1e',color:'#fff'});
+}
+
+// ═══════════════════════════════════════════════════════════
+// Home / Server List
+// ═══════════════════════════════════════════════════════════
+async function loadSrv() {
+    const folder = FOLDER;
+    if (folder) { openSrvByFolder(folder); return; }
+    const r = await fetch('/servers');
+    const d = await r.json();
+    const list = document.getElementById('srvList');
+    if (!d.servers.length) {
+        list.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--text-dim);"><i class="fas fa-server" style="font-size:32px;margin-bottom:12px;display:block;opacity:0.3;"></i>No instances yet. Click Create to get started.</div>`;
+        return;
+    }
+    list.innerHTML = d.servers.map(s => {
+        const statusCls = s.status==='suspended'?'status-suspended':s.online?'status-online':'status-offline';
+        const statusText = s.status==='suspended'?'SUSPENDED':s.online?'ONLINE':'OFFLINE';
+        return `<div class="srv-card animate__animated animate__fadeInUp" onclick='openSrv(${JSON.stringify(s)})'>
+            <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0;">
+                <div style="width:36px;height:36px;border-radius:10px;background:${s.online?'rgba(50,215,75,0.15)':'rgba(142,142,147,0.1)'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <i class="fas fa-server" style="color:${s.online?'var(--green)':'#555'};font-size:15px;"></i>
+                </div>
+                <div style="min-width:0;">
+                    <div style="font-weight:800;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s.name}</div>
+                    <div style="font-size:10px;color:var(--text-dim);margin-top:2px;font-family:'JetBrains Mono';">${s.folder}</div>
+                </div>
+            </div>
+            <div style="text-align:right;flex-shrink:0;margin-left:10px;">
+                <div class="srv-status ${statusCls}">${statusText}</div>
+                <div style="font-size:10px;color:#555;margin-top:5px;">${s.cpu} · ${s.ram}</div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function goHome() {
+    clearInterval(logItv); clearInterval(statsItv);
+    if (logRateTimer) { clearInterval(logRateTimer); logRateTimer = null; }
+    stopPerfLoop();
+    curSrv = null; currentSubPath = ''; selectedFiles.clear();
+    document.getElementById('homeView').style.display = 'block';
+    document.getElementById('manageView').style.display = 'none';
+    loadSrv();
+}
+
+function openSrvByFolder(folder) {
+    openSrv({name: folder, folder: folder, online: false});
+}
+
+function openSrv(s) {
+    curSrv = s;
+    document.getElementById('homeView').style.display = 'none';
+    document.getElementById('manageView').style.display = 'block';
+    document.getElementById('vSrvName').innerText = s.name;
+    document.getElementById('consoleServerName').innerText = s.name;
+    currentSubPath = '';
+    loadFiles(); startLogs(); startStats();
+    initMiniCharts();
+}
+
+async function createServer() {
+    const {value:n} = await Swal.fire({title:'Instance Name', input:'text', inputPlaceholder:'my-bot', background:'#1c1c1e', color:'#fff', confirmButtonColor:'var(--accent)'});
+    if (n && n.trim()) {
+        const r = await fetch('/add', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name:n.trim()})});
+        const d = await r.json();
+        if (d.status==='success') { toast('Instance created!'); loadSrv(); }
+        else Swal.fire('Error', d.msg||'Could not create instance.', 'error');
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+// Server Actions
+// ═══════════════════════════════════════════════════════════
+async function srvAction(a) {
+    const r = await fetch(`/server/action/${curSrv.folder}/${a}`, {method:'POST'});
+    const d = await r.json();
+    if (d.status==='error') Swal.fire('Error', d.msg, 'error');
+    else toast(`${a.toUpperCase()} executed`, 'success');
+}
+
+async function deleteServer() {
+    const res = await Swal.fire({title:'Delete Instance?', text:'This will permanently destroy all files.', icon:'warning', showCancelButton:true, confirmButtonColor:'#ff3b30', background:'#1c1c1e', color:'#fff'});
+    if (res.isConfirmed) {
+        const r = await fetch(`/server/delete/${curSrv.folder}`, {method:'POST'});
+        const d = await r.json();
+        if (d.status==='deleted') { toast('Instance deleted'); goHome(); }
+        else Swal.fire('Error', d.msg, 'error');
+    }
+}
+
+async function setStartupFile() {
+    const {value:f} = await Swal.fire({title:'Set Startup File', input:'text', inputValue: curSrv.startup||'main.py', inputPlaceholder:'e.g. main.py or bot.py', background:'#1c1c1e', color:'#fff'});
+    if (f) {
+        await fetch(`/server/set-startup/${curSrv.folder}`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({file:f})});
+        toast('Startup file updated');
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+// Resource Monitor
+// ═══════════════════════════════════════════════════════════
+function initMiniCharts() {
+    const chartOpts = (label, color) => ({
+        type:'line', data:{
+            labels: Array(20).fill(''),
+            datasets:[{data:Array(20).fill(0), borderColor:color, borderWidth:1.5, pointRadius:0, fill:true, backgroundColor:color.replace(')',',0.1)').replace('rgb','rgba'), tension:0.4}]
+        },
+        options:{animation:false, responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{display:false},y:{display:false,min:0,max:100}}}
+    });
+    if (cpuChart) cpuChart.destroy();
+    if (ramChart) ramChart.destroy();
+    cpuChart = new Chart(document.getElementById('cpuChart'), chartOpts('CPU', 'rgb(34,211,238)'));
+    ramChart = new Chart(document.getElementById('ramChart'), chartOpts('RAM', 'rgb(50,215,75)'));
+}
+
+function updateChart(chart, dataArr, newVal) {
+    dataArr.push(parseFloat(newVal)||0);
+    if (dataArr.length > 20) dataArr.shift();
+    chart.data.labels = Array(dataArr.length).fill('');
+    chart.data.datasets[0].data = [...dataArr];
+    chart.update('none');
+}
+
+function startStats() {
+    if (statsItv) clearInterval(statsItv);
+    fetchStats();
+    statsItv = setInterval(fetchStats, 1500);
+}
+
+async function fetchStats() {
+    if (!curSrv) return;
+    try {
+        const r = await fetch(`/server/stats/${curSrv.folder}`);
+        const d = await r.json();
+        const online = d.online;
+        document.getElementById('rStatus').innerText = online ? 'ONLINE' : 'OFFLINE';
+        document.getElementById('rStatus').style.color = online ? 'var(--green)' : 'var(--text-dim)';
+        document.getElementById('rPid').innerText = d.pid || '-';
+        document.getElementById('rUptime').innerText = d.uptime || '-';
+        document.getElementById('rThreads').innerText = d.threads || '-';
+        document.getElementById('rCpu').innerText = (d.cpu||0) + '%';
+        document.getElementById('rRam').innerText = (d.ram||0) + ' MB';
+        document.getElementById('rSysCpu').innerText = (d.sys_cpu||0) + '%';
+        document.getElementById('rSysRam').innerText = d.sys_ram_used || '0';
+        document.getElementById('rSysRamT').innerText = d.sys_ram_total || '0';
+        document.getElementById('rDisk').innerText = (d.sys_disk_pct||0) + '%';
+        document.getElementById('rDiskUsed').innerText = d.sys_disk_used || '0';
+        document.getElementById('rDiskTotal').innerText = d.sys_disk_total || '0';
+        document.getElementById('rNetUp').innerText = '↑ ' + (d.net_sent||0);
+        document.getElementById('rNetDown').innerText = d.net_recv || '0';
+        const statusEl = document.getElementById('vStatus');
+        statusEl.className = 'srv-status ' + (online ? 'status-online' : 'status-offline');
+        statusEl.innerText = online ? 'ONLINE' : 'OFFLINE';
+        document.getElementById('rCpuBar').style.width = Math.min(parseFloat(d.sys_cpu)||0, 100) + '%';
+        document.getElementById('rRamBar').style.width = parseFloat(d.sys_ram_pct||0) + '%';
+        document.getElementById('rDiskBar').style.width = parseFloat(d.sys_disk_pct||0) + '%';
+        document.getElementById('monitorUpdated').innerText = 'Updated ' + new Date().toLocaleTimeString();
+        if (cpuChart) updateChart(cpuChart, cpuData, d.sys_cpu||0);
+        if (ramChart) updateChart(ramChart, ramData, d.sys_ram_pct||0);
+    } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════════════════
+// CONSOLE ENGINE — Virtual Scroll · AI Diagnostics · Filters
+// ═══════════════════════════════════════════════════════════
+
+// ── HTML escape ───────────────────────────────────────────
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ── Performance mode cycle ────────────────────────────────
+function cycleMode() {
+    const keys = ['normal','turbo','lowmem'];
+    modeKey = keys[(keys.indexOf(modeKey)+1) % keys.length];
+    mode = PERF_MODES[modeKey];
+    const b = document.getElementById('modeBadge');
+    b.textContent = mode.label;
+    b.className = 'mode-badge' + (mode.cls ? ' '+mode.cls : '');
+    if (allLines.length > mode.maxLines) { allLines = allLines.slice(-mode.maxLines); rebuildFilter(); }
+    if (logItv) { clearInterval(logItv); logItv = setInterval(fetchLogs, mode.pollMs); }
+    toast('Mode: '+mode.label, 'info');
+}
+
+// ── RAF performance loop (FPS + memory display) ───────────
+function startPerfLoop() {
+    if (perfRafId) return;
+    const fpsEl = document.getElementById('pFPS');
+    const memEl = document.getElementById('pMem');
+    if (!fpsEl) return; // no meter on this page → don't burn a RAF loop
+    // Low-end / data-saver devices: skip FPS loop entirely (saves battery + CPU)
+    const lowEnd = (navigator.deviceMemory && navigator.deviceMemory <= 2) ||
+                   (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) ||
+                   (navigator.connection && navigator.connection.saveData);
+    if (lowEnd) { fpsEl.textContent = '—'; if (memEl) memEl.textContent = '—'; return; }
+    fpsLast = performance.now();
+    (function loop() {
+        fpsFrames++;
+        const now = performance.now();
+        if (now - fpsLast >= 1000) {
+            fpsEl.textContent = fpsFrames;
+            fpsFrames = 0; fpsLast = now;
+            if (memEl && window.performance?.memory)
+                memEl.textContent = (window.performance.memory.usedJSHeapSize/1048576|0)+'MB';
+        }
+        perfRafId = requestAnimationFrame(loop);
+    })();
+}
+function stopPerfLoop() {
+    if (perfRafId) { cancelAnimationFrame(perfRafId); perfRafId = null; }
+    fpsFrames = 0;
+}
+// Pause RAF when tab is hidden, resume when visible (saves battery on mobile)
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) stopPerfLoop();
+    else if (curSrv) startPerfLoop();
+});
+
+// ── Log rate counter ──────────────────────────────────────
+function startLogRateTimer() {
+    if (logRateTimer) clearInterval(logRateTimer);
+    logRateTimer = setInterval(() => {
+        document.getElementById('pRate').textContent = logRateTick;
+        logRateTick = 0;
+    }, 1000);
+}
+
+// ── Viewport scroll listener ──────────────────────────────
+let vpRafId = null;
+function initVP() {
+    const vp = document.getElementById('consoleVP');
+    if (!vp) return;
+    vp.addEventListener('scroll', () => {
+        isScrolling = true;
+        // Coalesce scrolls into ONE render per frame; overscan gate in renderVS skips no-op work.
+        if (vpRafId === null) {
+            vpRafId = requestAnimationFrame(() => { vpRafId = null; renderVS(); });
+        }
+        clearTimeout(scrollTimer);
+        scrollTimer = setTimeout(() => {
+            isScrolling = false;
+            vsStart = -1; renderVS(); // force accurate final render after fling settles
+            const atBottom = vp.scrollTop + vp.clientHeight >= vp.scrollHeight - 32;
+            if (atBottom !== autoScroll) { autoScroll = atBottom; updateAutoScrollBtn(); }
+        }, 120);
+    }, {passive: true});
+}
+
+// ── Virtual-scroll render ─────────────────────────────────
+const LINE_H = 20; // fixed px height per log line
+
+function renderVS() {
+    const vp      = document.getElementById('consoleVP');
+    const linesEl = document.getElementById('vsLines');
+    const topSp   = document.getElementById('vsTop');
+    const botSp   = document.getElementById('vsBot');
+    if (!vp || !linesEl) return;
+
+    const total = filteredLines.length;
+    if (!total) {
+        topSp.style.height = '0px'; botSp.style.height = '0px';
+        linesEl.innerHTML = '<div style="padding:24px 0;text-align:center;color:#2d2d38;font-size:11px;font-family:\'JetBrains Mono\';">No output yet — start your server or run a command.</div>';
+        return;
+    }
+
+    const buf   = mode.renderBuf;
+    const first = Math.max(0, (vp.scrollTop / LINE_H | 0) - (buf >> 1));
+    const start = Math.max(0, first);
+    const end   = Math.min(total, start + buf);
+
+    // Overscan gate: only rebuild DOM after scrolling past ~1/4 of the render buffer.
+    // This is what makes momentum-scroll smooth on low-end Chrome mobile.
+    const gate = Math.max(8, buf >> 2);
+    if (vsStart !== -1 && Math.abs(start - vsStart) < gate && end <= vsEnd && start >= vsStart) return;
+    vsStart = start; vsEnd = end;
+
+    topSp.style.height = (start * LINE_H) + 'px';
+    botSp.style.height = ((total - end) * LINE_H) + 'px';
+    linesEl.innerHTML  = filteredLines.slice(start, end).map((l, i) => lineHtml(l, start + i)).join('');
+}
+
+function lineHtml(l, idx) {
+    return `<div class="log-line" data-i="${idx}">` +
+        `<span class="log-ts">${l.ts}</span>` +
+        `<span class="log-text ${l.cls}">${escHtml(l.raw)}</span>` +
+        `<span class="log-copy-btn" onclick="copyLine(${idx})">⎘</span>` +
+    `</div>`;
+}
+
+// ── Line classifier / parser ──────────────────────────────
+function parseLine(raw) {
+    const l = raw.toLowerCase();
+    let cls = 'log-plain', level = 'other', tb = false;
+    if (/^(\s*(traceback \(most|file "|  file "))/i.test(raw)) {
+        cls = 'log-traceback'; level = 'error'; tb = true;
+    } else if (/\b(error|exception|critical|fatal)\b/.test(l)) {
+        cls = 'log-error'; level = 'error';
+    } else if (/\bwarn(ing)?\b/.test(l)) {
+        cls = 'log-warn'; level = 'warn';
+    } else if (/(\[info\]|\bstarted\b|\blistening\b|\brunning on\b|\bready\b)/.test(l)) {
+        cls = 'log-info'; level = 'info';
+    } else if (/\[debug\]/.test(l)) {
+        cls = 'log-debug';
+    } else if (/(\[cmd\]|\$ |\[install\])/.test(l)) {
+        cls = l.includes('[install]') ? 'log-install' : 'log-cmd';
+    } else if (/successfully installed|already satisfied/.test(l)) {
+        cls = 'log-ok'; level = 'info';
+    }
+    return {
+        raw, cls, level, tb,
+        ts: new Date().toLocaleTimeString('en', {hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false})
+    };
+}
+
+// ── Text ingestion (called on every delta chunk) ──────────
+function ingestText(text) {
+    if (!text) return;
+    const incoming = text.split('\n').filter(l => l.trim());
+    if (!incoming.length) return;
+    logRateTick += incoming.length;
+    const parsed = incoming.map(parseLine);
+    allLines.push(...parsed);
+    if (allLines.length > mode.maxLines) allLines = allLines.slice(-mode.maxLines);
+    parsed.forEach(p => {
+        lineCounts.all++;
+        if      (p.level==='error') lineCounts.error++;
+        else if (p.level==='warn')  lineCounts.warn++;
+        else if (p.level==='info')  lineCounts.info++;
+    });
+    updateCounts();
+    aiScan(parsed);   // run AI pattern check on new lines only
+    scheduleRender();
+}
+
+function scheduleRender() {
+    if (batchTimer) return; // already queued
+    batchTimer = setTimeout(() => {
+        batchTimer = null;
+        rebuildFilter();
+        if (autoScroll) scrollToBottom();
+    }, mode.batchMs);
+}
+
+// ── Filter / search pipeline ──────────────────────────────
+function rebuildFilter() {
+    const q = searchQuery.toLowerCase();
+    const f = activeFilter;
+    filteredLines = allLines.filter(l => {
+        if (f !== 'all' && l.level !== f) return false;
+        if (q && !l.raw.toLowerCase().includes(q)) return false;
+        return true;
+    });
+    document.getElementById('consoleLogSize').textContent =
+        `${filteredLines.length}/${allLines.length} lines`;
+    vsStart = -1; vsEnd = -1; // force full re-render
+    renderVS();
+}
+
+function updateCounts() {
+    document.getElementById('cntAll').textContent  = lineCounts.all;
+    document.getElementById('cntErr').textContent  = lineCounts.error;
+    document.getElementById('cntWarn').textContent = lineCounts.warn;
+    document.getElementById('cntInfo').textContent = lineCounts.info;
+}
+
+function setFilter(f) {
+    activeFilter = f;
+    [['fbAll','all'],['fbErr','error'],['fbWarn','warn'],['fbInfo','info']].forEach(([id,k]) => {
+        document.getElementById(id)?.classList.toggle('f-active', k===f);
+    });
+    rebuildFilter();
+}
+
+let srchDebounce = null;
+function onSearch(val) {
+    clearTimeout(srchDebounce);
+    srchDebounce = setTimeout(() => { searchQuery = val; rebuildFilter(); updateSearchInfo(); }, 200);
+}
+
+function updateSearchInfo() {
+    const el = document.getElementById('searchInfo');
+    if (!el) return;
+    if (!searchQuery) { el.textContent = ''; return; }
+    el.textContent = filteredLines.length ? `${filteredLines.length} match${filteredLines.length>1?'es':''}` : 'No matches';
+}
+
+function searchStep(dir) {
+    if (!filteredLines.length || !searchQuery) return;
+    const q = searchQuery.toLowerCase();
+    const matches = filteredLines.reduce((a,l,i) => { if(l.raw.toLowerCase().includes(q)) a.push(i); return a; }, []);
+    if (!matches.length) return;
+    searchStepIdx = (searchStepIdx + dir + matches.length) % matches.length;
+    scrollToLine(matches[searchStepIdx]);
+    document.getElementById('searchInfo').textContent = `${searchStepIdx+1}/${matches.length}`;
+}
+
+function toggleSearch() {
+    const el = document.getElementById('consoleSearch');
+    const show = el.style.display !== 'flex';
+    el.style.display = show ? 'flex' : 'none';
+    if (show) document.getElementById('searchInput').focus();
+}
+
+// ── Scroll helpers ────────────────────────────────────────
+function scrollToBottom() {
+    const vp = document.getElementById('consoleVP');
+    if (vp) vp.scrollTop = vp.scrollHeight;
+}
+
+function scrollToLine(idx) {
+    const vp = document.getElementById('consoleVP');
+    if (!vp) return;
+    vp.scrollTop = Math.max(0, idx*LINE_H - vp.clientHeight/2);
+    vsStart = -1; renderVS();
+}
+
+function toggleAutoScroll() {
+    autoScroll = !autoScroll;
+    updateAutoScrollBtn();
+    if (autoScroll) scrollToBottom();
+    toast(autoScroll ? 'Auto-scroll ON' : 'Auto-scroll OFF', 'info');
+}
+function updateAutoScrollBtn() {
+    const b = document.getElementById('btnAutoScroll');
+    if (!b) return;
+    b.className = 'con-btn' + (autoScroll ? ' active-green' : '');
+    b.textContent = autoScroll ? '↓ Auto' : '↓ Off';
+}
+
+function togglePause() {
+    logsPaused = !logsPaused;
+    const b = document.getElementById('btnPause');
+    if (b) {
+        b.innerHTML = logsPaused ? '<i class="fas fa-play"></i> Paused' : '<i class="fas fa-pause"></i>';
+        b.classList.toggle('active', logsPaused);
+    }
+    toast(logsPaused ? 'Output paused' : 'Output resumed', 'info');
+}
+
+function toggleFullscreen() {
+    const vp = document.getElementById('consoleVP');
+    if (!document.fullscreenElement) {
+        vp?.requestFullscreen?.();
+        vp?.classList.add('vs-fullscreen');
+    } else {
+        document.exitFullscreen?.();
+        vp?.classList.remove('vs-fullscreen');
+    }
+}
+
+// ── Error navigation ──────────────────────────────────────
+function rebuildErrIdx() {
+    errIndices = allLines.reduce((a,l,i) => { if(l.level==='error') a.push(i); return a; }, []);
+}
+function jumpError(dir) {
+    rebuildErrIdx();
+    if (!errIndices.length) { toast('No errors in log','info'); return; }
+    errNavIdx = (errNavIdx + dir + errIndices.length) % errIndices.length;
+    const target = allLines[errIndices[errNavIdx]];
+    const fi = filteredLines.indexOf(target);
+    if (fi >= 0) scrollToLine(fi);
+    else { setFilter('all'); setTimeout(() => { const fi2=filteredLines.indexOf(target); if(fi2>=0) scrollToLine(fi2); }, 60); }
+}
+
+// ── Line copy (copies full traceback block if applicable) ─
+function copyLine(idx) {
+    const l = filteredLines[idx];
+    if (!l) return;
+    let text = l.raw;
+    if (l.tb) {
+        let s = idx; while(s > 0 && filteredLines[s-1]?.tb) s--;
+        let e = idx; while(e < filteredLines.length-1 && filteredLines[e+1]?.tb) e++;
+        text = filteredLines.slice(s, e+1).map(x=>x.raw).join('\n');
+    }
+    navigator.clipboard?.writeText(text).then(() => toast(l.tb ? 'Traceback copied!' : 'Line copied!'));
+}
+
+function copyLogs() {
+    const t = (activeFilter==='all' ? allLines : filteredLines).map(l=>l.raw).join('\n');
+    navigator.clipboard?.writeText(t).then(() => toast('Logs copied!'));
+}
+
+function downloadLogs() {
+    const t = allLines.map(l=>l.raw).join('\n');
+    const a = document.createElement('a');
+    const fname = (curSrv?.folder||'console')+'_'+new Date().toISOString().slice(0,19).replace(/:/g,'-')+'.log';
+    a.href = 'data:text/plain;charset=utf-8,'+encodeURIComponent(t);
+    a.download = fname; a.click();
+    toast('Downloading logs…');
+}
+
+function clearConsole() {
+    allLines=[]; filteredLines=[]; logOffset=0;
+    lineCounts={all:0,error:0,warn:0,info:0};
+    errIndices=[]; errNavIdx=0; searchQuery='';
+    if(batchTimer){clearTimeout(batchTimer);batchTimer=null;}
+    updateCounts();
+    const linesEl = document.getElementById('vsLines');
+    if (linesEl) linesEl.innerHTML = '';
+    const topSp = document.getElementById('vsTop'); if(topSp) topSp.style.height='0px';
+    const botSp = document.getElementById('vsBot'); if(botSp) botSp.style.height='0px';
+    document.getElementById('consoleLogSize').textContent = '0 lines';
+    toast('Console cleared','info');
+}
+
+// ── Delta log polling ─────────────────────────────────────
+function startLogs() {
+    if (logItv) clearInterval(logItv);
+    clearConsole();
+    aiDetected=[]; aiIdx=0; closeAi();
+    startPerfLoop(); startLogRateTimer();
+    fetchLogs();
+    logItv = setInterval(fetchLogs, mode.pollMs);
+}
+
+async function fetchLogs() {
+    if (!curSrv || logsPaused) return;
+    try {
+        const r = await fetch(`/server/log/${curSrv.folder}?offset=${logOffset}`);
+        const d = await r.json();
+        if (d.log) { logOffset = d.offset ?? logOffset; ingestText(d.log); }
+    } catch(e) {}
+}
+
+// ── Keyboard shortcut (Ctrl+F) ────────────────────────────
+document.addEventListener('keydown', e => {
+    if ((e.ctrlKey||e.metaKey) && e.key==='f') {
+        const vp = document.getElementById('consoleVP');
+        if (vp && vp.getBoundingClientRect().top < window.innerHeight) { e.preventDefault(); toggleSearch(); }
+    }
+});
+
+// ── Clipboard helper (used by AI panel) ──────────────────
+function copyText(txt) { navigator.clipboard?.writeText(txt).then(()=>toast('Copied!')); }
+
+// ═══════════════════════════════════════════════════════════
+// AI ERROR DETECTION ENGINE
+// Pattern-matched, fully client-side — zero network overhead
+// ═══════════════════════════════════════════════════════════
+const AI_RULES = [
+  { id:'mod_missing', pat:/ModuleNotFoundError: No module named '([^']+)'/i, sev:'critical', title:'Missing Package',
+    dx(m){ const root=m[1].split('.')[0];
+      const MAP={telegram:'python-telegram-bot',cv2:'opencv-python',sklearn:'scikit-learn',
+                 bs4:'beautifulsoup4',PIL:'Pillow',yaml:'PyYAML',dotenv:'python-dotenv',
+                 flask_socketio:'flask-socketio',flask_cors:'flask-cors',psutil:'psutil',
+                 aiohttp:'aiohttp',discord:'discord.py',tweepy:'tweepy',jwt:'PyJWT',
+                 sqlalchemy:'SQLAlchemy',numpy:'numpy',pandas:'pandas',requests:'requests'};
+      const pkg=MAP[root]||root;
+      return { expl:`Package "${m[1]}" is not installed in this Python environment.`,
+               cause:'Add it to requirements.txt or install it below.',
+               fix:`pip install ${pkg}`, installPkg:pkg, conf:99, time:'< 1 min',
+               pa:`On PythonAnywhere Bash console: <code>pip3.10 install --user ${pkg}</code>` }; }},
+  { id:'import_err', pat:/ImportError: ([^\n]+)/i, sev:'critical', title:'Import Error',
+    dx(m){ return { expl:`Failed to import: ${m[1]}`,
+                    cause:'The module exists but has an internal error or a missing sub-dependency.',
+                    fix:`pip install --upgrade ${m[1].split(' ').pop().replace(/['"]/g,'')}`,
+                    conf:70, time:'2–5 min' }; }},
+  { id:'syntax_err', pat:/SyntaxError: ([^\n]+)/i, sev:'critical', title:'Syntax Error',
+    dx(m,raw){ const ln=raw.match(/line (\d+)/i);
+      return { expl:`Python syntax error: ${m[1]}`,
+               cause:(ln?`Check line ${ln[1]}`:'Check your code')+' for missing colons, brackets, or quotes.',
+               fix:`python3 -m py_compile your_file.py`, conf:95, time:'1–5 min', noInstall:true }; }},
+  { id:'indent_err', pat:/IndentationError: ([^\n]+)/i, sev:'critical', title:'Indentation Error',
+    dx(m){ return { expl:`Indentation error: ${m[1]}`,
+                    cause:'Use 4 spaces per level. Never mix tabs and spaces.',
+                    fix:null, conf:99, time:'1–10 min', noInstall:true }; }},
+  { id:'fnf_err', pat:/FileNotFoundError: \[Errno 2\][^']*'([^']+)'/i, sev:'critical', title:'File Not Found',
+    dx(m){ return { expl:`File or directory "${m[1]}" does not exist.`,
+                    cause:'Working directory may be wrong, or the file hasn\'t been created yet.',
+                    fix:`ls -la`, conf:88, time:'2–10 min', noInstall:true }; }},
+  { id:'perm_err', pat:/PermissionError: \[Errno 13\][^']*'([^']+)'/i, sev:'critical', title:'Permission Denied',
+    dx(m){ return { expl:`No permission to access "${m[1]}".`,
+                    cause:'File has restrictive permissions or you\'re writing to a protected path.',
+                    fix:`chmod 755 "${m[1]}"`, conf:85, time:'2–5 min', noInstall:true }; }},
+  { id:'port_busy', pat:/address already in use|OSError: \[Errno 98\]|EADDRINUSE/i, sev:'critical', title:'Port In Use',
+    dx(){ return { expl:'The server port is already occupied by another process.',
+                   cause:'A previous instance may still be running.',
+                   fix:`pkill -f python3`, conf:90, time:'< 1 min', noInstall:true }; }},
+  { id:'sqlite_err', pat:/sqlite3\.OperationalError: ([^\n]+)/i, sev:'error', title:'SQLite Error',
+    dx(m){ return { expl:`SQLite error: ${m[1]}`,
+                    cause:m[1].includes('no such table')?'The database table hasn\'t been initialised yet.':'Check your query syntax and database path.',
+                    fix:`python3 -c "import app; app.init_db()"`, conf:70, time:'5–15 min', noInstall:true }; }},
+  { id:'env_miss', pat:/KeyError: '([A-Z_]{3,})'|os\.environ\['([A-Z_]+)'\]/i, sev:'warning', title:'Missing Env Variable',
+    dx(m){ const v=m[1]||m[2]||'YOUR_VAR';
+      return { expl:`Environment variable "${v}" is not set.`,
+               cause:'Your app needs this variable but it hasn\'t been configured.',
+               fix:`export ${v}=your_value`, conf:80, time:'2–5 min', noInstall:true,
+               pa:'On PythonAnywhere: Web tab → Code section → Environment Variables.' }; }},
+  { id:'oom', pat:/MemoryError|Killed\s*$|Cannot allocate memory/im, sev:'critical', title:'Out of Memory',
+    dx(){ return { expl:'The process was killed because it ran out of memory.',
+                   cause:'PythonAnywhere free accounts have a ~512 MB RAM quota.',
+                   fix:null, conf:90, time:'15–60 min', noInstall:true,
+                   pa:'Check the PythonAnywhere CPU usage page. Consider upgrading or reducing memory consumption.' }; }},
+  { id:'wsgi_err', pat:/mod_wsgi|wsgi.*error|WSGI application/i, sev:'critical', title:'WSGI Error',
+    dx(){ return { expl:'PythonAnywhere cannot load your app through WSGI.',
+                   cause:'The WSGI file path or application import is incorrect.',
+                   fix:null, conf:85, time:'5–20 min', noInstall:true,
+                   pa:'Check the WSGI file in your PythonAnywhere Web tab. Verify the project path and the import name.' }; }},
+  { id:'pip_fail', pat:/ERROR: Could not install|No matching distribution found for ([^\s\n]+)/i, sev:'error', title:'pip Install Failed',
+    dx(m){ const pkg=m[1]||'package';
+      return { expl:'pip failed to install a package.',
+               cause:`"${pkg}" may not exist on PyPI or is incompatible with your Python version.`,
+               fix:`pip3 install --user ${pkg}`, installPkg:pkg, conf:65, time:'2–10 min' }; }},
+  { id:'gunicorn', pat:/WORKER TIMEOUT|worker timeout \(/i, sev:'error', title:'Gunicorn Timeout',
+    dx(){ return { expl:'A Gunicorn worker timed out and was killed.',
+                   cause:'A request took too long. Increase --timeout or optimise slow code.',
+                   fix:`gunicorn --timeout 120 --workers 2 app:app`, conf:80, time:'5–15 min', noInstall:true }; }},
+  { id:'pa_reload', pat:/touch.*wsgi|reload.*web\s*app|changes.*not\s*visible/i, sev:'warning', title:'App Not Reloaded',
+    dx(){ return { expl:'Your code changes are not live yet.',
+                   cause:'On PythonAnywhere, you must reload the web app after every change.',
+                   fix:null, conf:95, time:'< 1 min', noInstall:true,
+                   pa:'Go to PythonAnywhere Web tab → click the green Reload button.' }; }},
+];
+
+function aiScan(lines) {
+    let found = false;
+    lines.forEach(l => {
+        if (l.level !== 'error' && l.level !== 'warn') return;
+        for (const rule of AI_RULES) {
+            const m = l.raw.match(rule.pat);
+            if (m && !aiDetected.find(e => e.id===rule.id)) {
+                aiDetected.push({ id:rule.id, sev:rule.sev, title:rule.title, raw:l.raw, diag:rule.dx(m, l.raw) });
+                found = true;
+                break;
+            }
+        }
+    });
+    if (found) renderAi();
+}
+
+function renderAi() {
+    if (!aiDetected.length) return;
+    document.getElementById('aiPanel').classList.add('ai-visible');
+    const err = aiDetected[aiIdx];
+    const d   = err.diag;
+    document.getElementById('aiTitle').textContent = err.title;
+    document.getElementById('aiCount').textContent = aiDetected.length > 1 ? `${aiIdx+1}/${aiDetected.length}` : '';
+    const isInstall = d.fix && d.fix.includes('pip') && !d.noInstall;
+    const safeFix = (d.fix||'').replace(/'/g,"\\'");
+    const safePkg = ((d.installPkg||d.fix||'').replace('pip install ','').replace('pip3 install --user ','')).replace(/'/g,"\\'");
+    document.getElementById('aiBody').innerHTML = `
+        <div class="ai-etype ${err.sev==='critical'?'crit':'warn-lv'}">${err.sev==='critical'?'🔴':'🟡'} ${err.title}</div>
+        <div class="ai-expl">${escHtml(d.expl)}</div>
+        <div class="ai-cause">💡 ${escHtml(d.cause)}</div>
+        ${d.fix ? `<div class="ai-fix-box">
+            <div class="ai-fix-lbl">Recommended Fix</div>
+            <div class="ai-fix-cmd">
+                <code>${escHtml(d.fix)}</code>
+                <div style="display:flex;gap:4px;flex-shrink:0;">
+                    <button class="con-btn" onclick="copyText('${safeFix}')"><i class="fas fa-copy"></i></button>
+                    ${isInstall ? `<button class="con-btn active-green" onclick="confirmInstall('${safePkg}')"><i class="fas fa-download"></i> Install</button>` : ''}
+                </div>
+            </div>
+        </div>` : ''}
+        ${d.pa ? `<div class="ai-pa-tip"><strong style="color:var(--accent)">PythonAnywhere:</strong> ${d.pa}</div>` : ''}
+        <div class="ai-meta-row">
+            <div class="ai-meta-item">
+                <div class="amv" style="color:${err.sev==='critical'?'var(--red)':'var(--orange)'};">${d.conf}%</div>
+                <div class="aml">Confidence</div>
+            </div>
+            <div class="ai-meta-item">
+                <div class="amv" style="color:var(--accent);">${d.time}</div>
+                <div class="aml">Est. Fix Time</div>
+            </div>
+        </div>
+        <div class="ai-matched">&gt; ${escHtml((err.raw||'').slice(0,100))}</div>`;
+}
+
+function closeAi() { document.getElementById('aiPanel')?.classList.remove('ai-visible'); }
+function aiNav(dir) { if(!aiDetected.length) return; aiIdx=(aiIdx+dir+aiDetected.length)%aiDetected.length; renderAi(); }
+
+async function confirmInstall(pkg) {
+    const ok = await Swal.fire({
+        title: `Install "${pkg}"?`,
+        html: `<div style="font-family:'JetBrains Mono';font-size:12px;color:#aaa;padding:4px 0;">pip install --user ${escHtml(pkg)}</div>
+               <div style="font-size:11px;color:#555;margin-top:6px;">Runs in your server environment. Allow up to 2 minutes.</div>`,
+        icon:'question', showCancelButton:true,
+        confirmButtonText:'✅ Install', cancelButtonText:'Cancel',
+        confirmButtonColor:'#32d74b', background:'#1c1c1e', color:'#fff'
+    });
+    if (!ok.isConfirmed) return;
+    toast(`Installing ${pkg}…`, 'info');
+    try {
+        const r = await fetch(`/server/install/${curSrv.folder}`, {
+            method:'POST',
+            headers:{'Content-Type':'application/json', 'X-CSRF-Token':'{{ csrf_token }}'},
+            body: JSON.stringify({package: pkg})
+        });
+        const d = await r.json();
+        if (d.status==='success') { toast(`✅ ${pkg} installed successfully!`, 'success'); closeAi(); }
+        else Swal.fire('Install Failed', d.output||d.msg||'Unknown error', 'error');
+    } catch(e) { toast('Install request failed','error'); }
+}
+
+// ─────────────────────────────────────────────────────────
+// Terminal input + init
+// ─────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    const termCmd = document.getElementById('termCmd');
+    if (!termCmd) { initVP(); loadSrv(); return; }
+    termCmd.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+            sendConsoleCommand();
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (cmdHistIdx < cmdHistory.length - 1) { cmdHistIdx++; termCmd.value = cmdHistory[cmdHistory.length-1-cmdHistIdx]||''; }
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (cmdHistIdx > 0) { cmdHistIdx--; termCmd.value = cmdHistory[cmdHistory.length-1-cmdHistIdx]||''; }
+            else { cmdHistIdx=-1; termCmd.value=''; }
+        }
+    });
+    initVP();   // wire up virtual-scroll listener
+    loadSrv();
+});
+
+async function sendConsoleCommand() {
+    const termCmd = document.getElementById('termCmd');
+    const cmd = termCmd.value.trim();
+    if (!cmd || !curSrv) return;
+    cmdHistory.push(cmd);
+    cmdHistIdx = -1;
+    termCmd.value = '';
+    const r = await fetch(`/server/command/${curSrv.folder}`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({command:cmd})});
+    const d = await r.json();
+    if (d.status === 'error') toast(d.msg || 'Command failed', 'error');
+}
+
+// ═══════════════════════════════════════════════════════════
+// File Manager
+// ═══════════════════════════════════════════════════════════
+function fileIcon(name, isDir) {
+    if (isDir) return {cls:'dir', icon:'fa-folder'};
+    const ext = name.split('.').pop().toLowerCase();
+    const map = {
+        py:'py', js:'js', ts:'js', json:'json', yaml:'yaml', yml:'yaml',
+        html:'html', css:'css', sh:'sh', bash:'sh',
+        zip:'zip', gz:'zip', tar:'zip', '7z':'zip', rar:'zip',
+        txt:'txt', md:'txt', log:'txt',
+        png:'img', jpg:'img', jpeg:'img', gif:'img', svg:'img', webp:'img',
+        req:'req'
+    };
+    const icons = {
+        dir:'fa-folder', py:'fa-file-code', js:'fa-file-code', json:'fa-file-code',
+        yaml:'fa-file-code', html:'fa-file-code', css:'fa-file-code', sh:'fa-terminal',
+        zip:'fa-file-zipper', txt:'fa-file-lines', img:'fa-file-image',
+        req:'fa-box', generic:'fa-file'
+    };
+    const t = map[ext] || 'generic';
+    return {cls:t, icon:icons[t]||'fa-file'};
+}
+
+async function loadFiles() {
+    if (!curSrv) return;
+    const body = document.getElementById('fileList');
+    body.innerHTML = '<div class="fm-loading"><div class="spinner"></div></div>';
+    updateBreadcrumb();
+    const r = await fetch(`/files/list/${curSrv.folder}?path=${encodeURIComponent(currentSubPath)}`);
+    const items = await r.json();
+    renderFiles(items);
+}
+
+function renderFiles(items) {
+    const body = document.getElementById('fileList');
+    if (!items.length) {
+        body.innerHTML = '<div class="fm-empty"><i class="fas fa-folder-open" style="font-size:32px;opacity:0.2;margin-bottom:10px;display:block;"></i>Empty folder — drag files here to upload</div>';
+        return;
+    }
+    body.innerHTML = items.map(f => {
+        const {cls, icon} = fileIcon(f.name, f.is_dir);
+        const sel = selectedFiles.has(f.name) ? 'selected' : '';
+        return `<div class="file-item ${sel}" data-name="${escHtml(f.name)}" data-dir="${f.is_dir}" data-zip="${f.is_zip}"
+            onclick="fileClick(event,'${escHtml(f.name)}',${f.is_dir})"
+            ondblclick="${f.is_dir ? `navigateTo('${escHtml(currentSubPath+'/'+f.name).replace(/^\//, '')}')` : `editFile('${escHtml(f.name)}')`}"
+            oncontextmenu="showCtx(event,'${escHtml(f.name)}',${f.is_dir},${f.is_zip})">
+            <div class="file-check"></div>
+            <div class="file-icon ${cls}"><i class="fas ${icon}"></i></div>
+            <div class="file-meta">
+                <div class="file-name">${escHtml(f.name)}</div>
+                <div class="file-info">
+                    <span>${f.is_dir ? 'folder' : f.size_human || f.size + ' B'}</span>
+                    <span>${f.modified || ''}</span>
+                    <span class="file-perms">${f.permissions ? f.permissions : ''}</span>
+                </div>
+            </div>
+            <div class="file-more" onclick="event.stopPropagation();showCtx(event,'${escHtml(f.name)}',${f.is_dir},${f.is_zip})"><i class="fas fa-ellipsis-v"></i></div>
+        </div>`;
+    }).join('');
+    updateSelectionCount();
+    setupDropZone();
+}
+
+function fileClick(e, name, isDir) {
+    if (e.shiftKey || e.ctrlKey || e.metaKey) {
+        if (selectedFiles.has(name)) selectedFiles.delete(name);
+        else selectedFiles.add(name);
+        e.currentTarget.classList.toggle('selected', selectedFiles.has(name));
+        updateSelectionCount();
+    }
+}
+
+function updateSelectionCount() {
+    const el = document.getElementById('selectionCount');
+    el.innerText = selectedFiles.size > 0 ? `${selectedFiles.size} selected` : '';
+}
+
+function updateBreadcrumb() {
+    const crumb = document.getElementById('breadcrumb');
+    const parts = currentSubPath ? currentSubPath.split('/').filter(Boolean) : [];
+    let html = `<span class="crumb ${!parts.length?'active':''}" onclick="navigateTo('')"><i class="fas fa-house"></i> Root</span>`;
+    parts.forEach((p, i) => {
+        const path = parts.slice(0, i+1).join('/');
+        html += `<span class="crumb-sep"><i class="fas fa-chevron-right"></i></span>
+                 <span class="crumb ${i===parts.length-1?'active':''}" onclick="navigateTo('${escHtml(path)}')">${escHtml(p)}</span>`;
+    });
+    crumb.innerHTML = html;
+}
+
+function navigateTo(path) {
+    currentSubPath = path;
+    selectedFiles.clear();
+    document.getElementById('fmSearchInput').value = '';
+    document.getElementById('searchResults').style.display = 'none';
+    loadFiles();
+}
+
+// ── Context menu ──
+let ctxTarget = null;
+function showCtx(e, name, isDir, isZip) {
+    e.preventDefault(); e.stopPropagation();
+    ctxTarget = {name, isDir, isZip};
+    hideCtx();
+    const menu = document.getElementById('ctxMenu');
+    document.getElementById('ctx-open').style.display = isDir ? '' : 'none';
+    document.getElementById('ctx-edit').style.display = isDir ? 'none' : '';
+    document.getElementById('ctx-unzip').style.display = isZip ? '' : 'none';
+    document.getElementById('ctx-download').style.display = isDir ? 'none' : '';
+    document.getElementById('ctx-paste').style.display = clipboard ? '' : 'none';
+    menu.style.display = 'block';
+    const x = Math.min(e.clientX, window.innerWidth - 200);
+    const y = Math.min(e.clientY, window.innerHeight - menu.offsetHeight - 10);
+    menu.style.left = x + 'px'; menu.style.top = y + 'px';
+}
+
+function hideCtx() {
+    document.getElementById('ctxMenu').style.display = 'none';
+}
+document.addEventListener('click', hideCtx);
+// Hide context menu on console scroll only (avoid capture-phase document scroll = major mobile lag)
+document.getElementById('consoleVP')?.addEventListener('scroll', hideCtx, {passive:true});
+
+// Bind context menu actions
+document.getElementById('ctx-open').onclick = () => { if(ctxTarget) navigateTo(currentSubPath ? currentSubPath+'/'+ctxTarget.name : ctxTarget.name); };
+document.getElementById('ctx-edit').onclick = () => { if(ctxTarget) editFile(ctxTarget.name); };
+document.getElementById('ctx-rename').onclick = () => { if(ctxTarget) renameFile(ctxTarget.name); };
+document.getElementById('ctx-duplicate').onclick = () => { if(ctxTarget) duplicateFile(ctxTarget.name); };
+document.getElementById('ctx-copy').onclick = async () => {
+    if (!ctxTarget) return;
+    await fetch(`/files/copy/${curSrv.folder}`, {method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({name:ctxTarget.name, path:currentSubPath, action:'copy'})});
+    clipboard = {names:[ctxTarget.name], action:'copy'};
+    document.getElementById('btnPaste').style.display = '';
+    toast('Copied to clipboard');
+};
+document.getElementById('ctx-cut').onclick = async () => {
+    if (!ctxTarget) return;
+    await fetch(`/files/copy/${curSrv.folder}`, {method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({name:ctxTarget.name, path:currentSubPath, action:'cut'})});
+    clipboard = {names:[ctxTarget.name], action:'cut'};
+    document.getElementById('btnPaste').style.display = '';
+    toast('Cut to clipboard');
+};
+document.getElementById('ctx-paste').onclick = () => pasteFiles();
+document.getElementById('ctx-download').onclick = () => { if(ctxTarget) downloadFile(ctxTarget.name, ctxTarget.isDir); };
+document.getElementById('ctx-zip').onclick = () => { if(ctxTarget) zipFiles([ctxTarget.name]); };
+document.getElementById('ctx-unzip').onclick = () => { if(ctxTarget) unzipFile(ctxTarget.name); };
+document.getElementById('ctx-delete').onclick = () => { if(ctxTarget) deleteFiles([ctxTarget.name]); };
+
+// ── File operations ──
+async function createNew(type) {
+    const {value:n} = await Swal.fire({title:'New '+type, input:'text', inputPlaceholder:type==='file'?'filename.py':'folder-name', background:'#1c1c1e', color:'#fff', confirmButtonColor:'var(--accent)'});
+    if (!n) return;
+    const url = type==='file' ? `/files/create-file/${curSrv.folder}` : `/files/create-folder/${curSrv.folder}`;
+    const r = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name:n, path:currentSubPath})});
+    const d = await r.json();
+    if (d.status==='success') { toast(type+' created'); loadFiles(); }
+    else toast('Error creating '+type, 'error');
+}
+
+async function renameFile(oldName) {
+    const {value:newName} = await Swal.fire({title:'Rename', input:'text', inputValue:oldName, background:'#1c1c1e', color:'#fff', confirmButtonColor:'var(--accent)'});
+    if (!newName || newName===oldName) return;
+    const r = await fetch(`/files/rename/${curSrv.folder}`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({old:oldName, new:newName, path:currentSubPath})});
+    const d = await r.json();
+    if (d.status==='success') { toast('Renamed'); loadFiles(); }
+    else toast('Rename failed', 'error');
+}
+
+async function duplicateFile(name) {
+    const r = await fetch(`/files/duplicate/${curSrv.folder}`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name, path:currentSubPath})});
+    const d = await r.json();
+    if (d.status==='success') { toast('Duplicated as '+d.new_name); loadFiles(); }
+    else toast('Duplicate failed', 'error');
+}
+
+async function deleteFiles(names) {
+    const n = names.length;
+    const res = await Swal.fire({
+        title:`Delete ${n} item${n>1?'s':''}?`,
+        text: names.length <= 3 ? names.join(', ') : `${names.slice(0,3).join(', ')} and ${n-3} more`,
+        icon:'warning', showCancelButton:true, confirmButtonColor:'#ff453a', background:'#1c1c1e', color:'#fff'
+    });
+    if (!res.isConfirmed) return;
+    showProgress(true);
+    const r = await fetch(`/files/delete-bulk/${curSrv.folder}`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({names, path:currentSubPath})});
+    showProgress(false);
+    selectedFiles.clear(); toast('Deleted'); loadFiles();
+}
+
+async function pasteFiles() {
+    if (!clipboard) return;
+    const r = await fetch(`/files/paste/${curSrv.folder}`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({path:currentSubPath})});
+    const d = await r.json();
+    if (d.status==='success') { toast('Pasted'); if(clipboard.action==='cut'){clipboard=null;document.getElementById('btnPaste').style.display='none';} loadFiles(); }
+    else toast(d.msg||'Paste failed', 'error');
+}
+
+function downloadFile(name, isDir) {
+    if (isDir) {
+        const a = document.createElement('a');
+        a.href = `/files/download-folder/${curSrv.folder}?path=${encodeURIComponent(currentSubPath)}&name=${encodeURIComponent(name)}`;
+        a.download = name+'.zip'; a.click();
+    } else {
+        const a = document.createElement('a');
+        a.href = `/files/download/${curSrv.folder}/${encodeURIComponent(name)}?path=${encodeURIComponent(currentSubPath)}`;
+        a.download = name; a.click();
+    }
+    toast('Downloading...');
+}
+
+async function zipFiles(names) {
+    showProgress(true);
+    const r = await fetch(`/files/zip-bulk/${curSrv.folder}`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({names, path:currentSubPath})});
+    showProgress(false);
+    const d = await r.json();
+    if (d.status==='success') { toast('Compressed: '+d.zip); loadFiles(); }
+    else toast('Compression failed', 'error');
+}
+
+async function unzipFile(name) {
+    showProgress(true);
+    const r = await fetch(`/files/unzip/${curSrv.folder}`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name, path:currentSubPath})});
+    showProgress(false);
+    const d = await r.json();
+    if (d.status==='success') { toast('Extracted!'); loadFiles(); }
+    else Swal.fire('Error', d.msg, 'error');
+}
+
+function showProgress(show, pct=100) {
+    const wrap = document.getElementById('progressWrap');
+    const bar = document.getElementById('progressBar');
+    wrap.style.display = show ? 'block' : 'none';
+    if (show) { bar.style.width = '0%'; setTimeout(()=>{bar.style.width=pct+'%';},50); }
+}
+
+// ── Search ──
+async function searchFiles(q) {
+    const res = document.getElementById('searchResults');
+    if (!q) { res.style.display='none'; return; }
+    const r = await fetch(`/files/search/${curSrv.folder}?q=${encodeURIComponent(q)}&path=${encodeURIComponent(currentSubPath)}`);
+    const items = await r.json();
+    if (!items.length) { res.style.display='none'; return; }
+    res.style.display = 'block';
+    res.innerHTML = items.map(item => {
+        const {cls, icon} = fileIcon(item.name, item.is_dir);
+        return `<div class="search-result-item" onclick="navigateTo('${escHtml(item.path.replace(/[^/]*$/, '').replace(/\/$/, ''))}')">
+            <i class="fas ${icon} file-icon ${cls}" style="font-size:14px;width:20px;text-align:center;"></i>
+            <div>
+                <div style="font-size:12px;">${escHtml(item.name)}</div>
+                <div style="font-size:10px;color:var(--text-dim);">${escHtml(item.path)}</div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+document.addEventListener('click', e => {
+    if (!e.target.closest('#fmSearchInput') && !e.target.closest('#searchResults'))
+        document.getElementById('searchResults').style.display = 'none';
+});
+
+// ── Upload ──
+function triggerUpload() { document.getElementById('fUp').click(); }
+function triggerFolderUpload() { document.getElementById('fUpFolder').click(); }
+function triggerZipUpload() { document.getElementById('fUpZip').click(); }
+
+// Dedicated zip-archive upload — uploads the archive then offers to extract it immediately
+async function uploadZip(files) {
+    if (!files.length) return;
+    const file = files[0];
+    const ok = /\.(zip|rar|7z|tar|gz|tgz)$/i.test(file.name);
+    if (!ok) { toast('Please choose a .zip, .rar, .7z, .tar or .gz archive', 'error'); document.getElementById('fUpZip').value=''; return; }
+    showProgress(true, 0);
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('path', currentSubPath);
+    await fetch(`/files/upload/${curSrv.folder}`, {method:'POST', body:fd});
+    showProgress(true, 100);
+    showProgress(false);
+    document.getElementById('fUpZip').value = '';
+    toast(`Uploaded ${file.name}`);
+    await loadFiles();
+    if (/\.zip$/i.test(file.name)) {
+        const res = await Swal.fire({
+            title: 'Extract now?',
+            html: `<div style="font-size:13px;color:#aaa;">Unzip <b>${escHtml(file.name)}</b> into the current folder?</div>`,
+            icon: 'question', showCancelButton: true,
+            confirmButtonText: '<i class="fas fa-file-zipper"></i> Extract',
+            cancelButtonText: 'Not now',
+            confirmButtonColor: '#22d3ee', background: '#1c1c1e', color: '#fff'
+        });
+        if (res.isConfirmed) await unzipFile(file.name);
+    } else {
+        toast('Non-.zip archives were uploaded but auto-extract only supports .zip — use the ⋮ menu to extract manually if supported.', 'info');
+    }
+}
+
+async function uploadFiles(files, isFolder=false) {
+    if (!files.length) return;
+    const total = files.length;
+    showProgress(true, 0);
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const fd = new FormData();
+        let dest = currentSubPath;
+        if (isFolder && file.webkitRelativePath) {
+            const parts = file.webkitRelativePath.split('/');
+            dest = currentSubPath ? currentSubPath + '/' + parts.slice(0,-1).join('/') : parts.slice(0,-1).join('/');
+        }
+        fd.append('file', file);
+        fd.append('path', dest);
+        await fetch(`/files/upload/${curSrv.folder}`, {method:'POST', body:fd});
+        showProgress(true, Math.round(((i+1)/total)*100));
+    }
+    showProgress(false);
+    toast(`${total} file${total>1?'s':''} uploaded`);
+    loadFiles();
+}
+
+// ── Drag & Drop ──
+function setupDropZone() {
+    const dz = document.getElementById('dropZone');
+    dz.ondragover = e => { e.preventDefault(); dz.classList.add('drag-over'); };
+    dz.ondragleave = () => dz.classList.remove('drag-over');
+    dz.ondrop = e => {
+        e.preventDefault(); dz.classList.remove('drag-over');
+        const files = e.dataTransfer.files;
+        if (files.length) uploadFiles(files);
+    };
+}
+
+// ── Editor ──
+async function editFile(name) {
+    const r = await fetch(`/files/read/${curSrv.folder}?name=${encodeURIComponent(name)}&path=${encodeURIComponent(currentSubPath)}`);
+    const data = await r.json();
+    document.getElementById('edFile').innerText = name;
+    document.getElementById('editor-overlay').classList.add('active');
+    const ext = name.split('.').pop().toLowerCase();
+    const modeMap = {py:'python', js:'javascript', ts:'javascript', sh:'shell', bash:'shell', json:'javascript'};
+    const mode = modeMap[ext] || 'python';
+    if (!editorInstance) {
+        editorInstance = CodeMirror.fromTextArea(document.getElementById('edText'), {
+            mode, theme:'dracula', lineNumbers:true, lineWrapping:true,
+            extraKeys:{'Ctrl-S':()=>saveFile(),'Cmd-S':()=>saveFile()}
+        });
+    } else {
+        editorInstance.setOption('mode', mode);
+        editorInstance.setValue(data.content || '');
+        editorInstance.clearHistory();
+    }
+    editorInstance.setValue(data.content || '');
+    setTimeout(()=>editorInstance.refresh(), 50);
+}
+
+async function saveFile() {
+    const name = document.getElementById('edFile').innerText;
+    const content = editorInstance.getValue();
+    const r = await fetch(`/files/save/${curSrv.folder}`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name, content, path:currentSubPath})});
+    const d = await r.json();
+    if (d.status==='saved') toast('File saved!');
+    else toast('Save failed', 'error');
+}
+
+function closeEditor() {
+    document.getElementById('editor-overlay').classList.remove('active');
+}
+</script>
+
+    <!-- CLAUD Pro Panel — additive premium mobile UI -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='panel/panel.css') }}">
+    <script>window.CSRF_TOKEN = "{{ csrf_token }}";</script>
+    <script src="{{ url_for('static', filename='panel/panel.js') }}" defer></script>
+
+</body>
+</html>
