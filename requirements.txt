@@ -1,0 +1,11 @@
+flask>=3.0.0
+flask-socketio>=5.3.6
+psutil>=5.9.0
+werkzeug>=3.0.0
+python-engineio>=4.8.0
+python-socketio>=5.10.0
+eventlet>=0.35.1
+# Optional — enables gzip compression on responses. Safe to omit on constrained
+# PythonAnywhere installs; the panel silently skips it.
+flask-compress>=1.14
+openai>=1.40.0
